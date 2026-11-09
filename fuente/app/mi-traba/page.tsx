@@ -23,14 +23,13 @@ const columns = "id,owner_id,slug,name,profile_photo_url,cover_photo_url,descrip
 const errorText = (e: unknown) => e && typeof e === "object" && "message" in e ? String(e.message) : "No se pudo guardar la página.";
 const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-function normalizeHttpUrl(value: string) {
+function normalizeHttpUrl(value: string): string | null {
   if (!value) return null;
   try {
     const url = new URL(value);
-    if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error();
-    return url.toString();
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
   } catch {
-    throw new Error("Las fotos y redes deben usar una dirección web http o https.");
+    return null;
   }
 }
 
@@ -78,6 +77,20 @@ export default function MiTrabaPage() {
     const publicationStatus = String(form.get("publication_status") || "draft");
     if (!name || !slug) { setError("Escribe el nombre de la traba para crear su página."); setSaving(false); return; }
     if (publicationStatus === "published" && !profilePhoto) { setError("Añade la foto de perfil de la traba antes de publicar."); setSaving(false); return; }
+    const coverPhoto = String(form.get("cover_photo_url") || "").trim();
+    const urlInputs: Array<[string, string]> = [
+      ["foto de perfil", profilePhoto],
+      ["foto de portada", coverPhoto],
+      ["Facebook", String(form.get("facebook") || "").trim()],
+      ["Instagram", String(form.get("instagram") || "").trim()],
+      ["YouTube", String(form.get("youtube") || "").trim()],
+    ];
+    const invalidUrl = urlInputs.find(([, value]) => value && !normalizeHttpUrl(value));
+    if (invalidUrl) {
+      setError("La dirección de " + invalidUrl[0] + " debe comenzar con http:// o https://.");
+      setSaving(false);
+      return;
+    }
     const links: Record<string, string> = {};
     for (const [key, label] of [["facebook", "Facebook"], ["instagram", "Instagram"], ["youtube", "YouTube"]]) {
       const value = normalizeHttpUrl(String(form.get(key) || "").trim());
@@ -85,7 +98,7 @@ export default function MiTrabaPage() {
     }
     const payload = {
       name, slug, profile_photo_url: normalizeHttpUrl(profilePhoto),
-      cover_photo_url: normalizeHttpUrl(String(form.get("cover_photo_url") || "").trim()),
+      cover_photo_url: normalizeHttpUrl(coverPhoto),
       description: String(form.get("description") || "").trim(),
       country: String(form.get("country") || "").trim() || null,
       city: String(form.get("city") || "").trim() || null,
