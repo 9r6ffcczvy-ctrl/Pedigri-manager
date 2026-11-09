@@ -25,6 +25,15 @@ const errorText = (e: unknown) =>
 const claimText = (status: DirectoryPage["claim_status"]) =>
   status === "verified" ? "Reclamada y verificada" : status === "claimed" ? "Reclamada" : "Sin reclamar";
 
+function safeHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function DirectorioPage() {
   const [query, setQuery] = useState("");
   const [pages, setPages] = useState<DirectoryPage[]>([]);
@@ -136,7 +145,7 @@ export default function DirectorioPage() {
                 <div className={styles.profileTitle}><h2>{selected.name}</h2><span className={selected.claim_status === "unclaimed" ? styles.unclaimed : styles.claimed}>{claimText(selected.claim_status)}</span></div>
                 <p>{location(selected)}</p>
                 {selected.description && <p className={styles.profileIntro}>{selected.description}</p>}
-                {selected.public_links && Object.entries(selected.public_links).length > 0 && <div className={styles.socialLinks}>{Object.entries(selected.public_links).map(([label, url]) => <a key={label} href={url} target="_blank" rel="noreferrer">{label}</a>)}</div>}
+                {selected.public_links && Object.entries(selected.public_links).length > 0 && <div className={styles.socialLinks}>{Object.entries(selected.public_links).map(([label, url]) => { const safeUrl = safeHttpUrl(url); return safeUrl ? <a key={label} href={safeUrl} target="_blank" rel="noreferrer">{label}</a> : null; })}</div>}
                 <a className={styles.primaryButton} href="/login/">Entrar / reclamar esta página</a>
               </div>
             </div>
