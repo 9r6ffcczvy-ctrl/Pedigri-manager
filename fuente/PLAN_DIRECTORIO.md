@@ -18,6 +18,18 @@ Este documento describe la estructura implementada en Supabase para conectar el 
 - Solo se publican los ejemplares que el titular seleccione y los datos que autorice.
 - La base rechaza una ficha pública si falta la foto o tanto el nombre como el número de placa.
 
+## Anuncios inteligentes del directorio
+
+El plan de anuncios se integra desde esta etapa:
+
+- El contenido y la sección actual dan el contexto principal: por ejemplo, placas y accesorios al consultar placas; alimento y vacunas al consultar pollitos.
+- La ubicación del visitante limita los patrocinadores elegibles: país, estado/provincia y ciudad o demarcación cuando esté disponible. Solo aparecen proveedores que atiendan esa zona.
+- Los anuncios se marcarán como patrocinados y solo se mostrarán campañas activas y aprobadas.
+- El sistema usará categorías de la página o del módulo, no notas privadas de genealogía o cuido. No guardará la dirección IP en los registros de anuncios.
+- Si no hay un patrocinador que cubra la zona, no se mostrará una oferta de otra demarcación.
+
+La base actual todavía no incluye campañas publicitarias. Antes de conectarlas se añadirán campañas, creatividades, categorías, zonas atendidas y medición de impresiones/clics. Los espacios iniciales irán en el directorio y en las páginas de las trabas; después se adaptarán a los módulos relacionados.
+
 ## Tablas implementadas
 
 ### directory_pages
@@ -56,4 +68,5 @@ Las columnas de foto están listas para recibir una URL; falta conectar la carga
 2. Conectar **Catálogo TRAVERO** a las fichas publicadas y abrir el collage con foto y datos.
 3. Crear el flujo del dueño para preparar y publicar su página, fichas de ejemplares y productos/servicios.
 4. Añadir carga de fotos con permisos de Storage.
-5. Implementar publicaciones de redes cuando esté definida la autorización de importación.
+5. Añadir campañas publicitarias por categoría y demarcación; medir impresiones/clics sin guardar IP.
+6. Implementar publicaciones de redes cuando esté definida la autorización de importación.
