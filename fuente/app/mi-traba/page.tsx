@@ -111,7 +111,7 @@ export default function MiTrabaPage() {
       <div className="filters">
         <label>Seleccionar traba
           <select value={activePage?.id || ""} onChange={(e) => { const next = pages.find((p) => p.id === e.target.value) || null; setActivePage(next); setError(""); setNotice(""); }}>
-            {!pages.length && <option value="">Crea la primera página</option>}
+            <option value="">{pages.length ? "Crear una página nueva" : "Crea la primera página"}</option>
             {pages.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
