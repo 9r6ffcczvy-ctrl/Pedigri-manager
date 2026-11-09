@@ -120,3 +120,37 @@
   .postImage { height: 115px; }
   .footer { gap: 16px; flex-direction: column; }
 }
+
+.catalogSection { padding-top: 18px; }
+.catalogIntro { margin: 0 0 15px; color: #647a6d; font-size: 12px; line-height: 1.5; }
+.specimenCard { display: grid; grid-template-columns: minmax(190px, 260px) 1fr; overflow: hidden; max-width: 690px; border: 1px solid #e2eae3; border-radius: 14px; background: #fff; }
+.specimenPhoto { display: grid; place-items: center; min-height: 210px; background: linear-gradient(145deg, #dce9de, #aec7b1); color: #516f59; font-size: 12px; font-weight: 700; }
+.specimenInfo { align-self: center; padding: 22px; }
+.specimenKicker { color: #328056; font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.specimenInfo h3 { margin: 10px 0 8px; color: #244331; font-size: 19px; }
+.specimenPlate { margin: 0; color: #536e5c; font-size: 13px; }
+.specimenSummary { margin: 10px 0 17px; color: #718276; font-size: 12px; }
+.modalBackdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; overflow-y: auto; padding: 20px; background: #0e2419a8; }
+.collageModal { position: relative; width: min(760px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 27px; border-radius: 17px; background: #fff; box-shadow: 0 24px 70px #0b1c1250; }
+.closeButton { position: absolute; top: 15px; right: 18px; width: 35px; height: 35px; border: 0; border-radius: 50%; background: #edf3ee; color: #31543c; font-size: 24px; cursor: pointer; }
+.collageModal h3 { margin: 0 45px 20px 0; color: #1b3b29; font-size: 22px; }
+.collageLayout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(190px, .7fr); gap: 19px; }
+.collagePhotos { display: grid; gap: 9px; }
+.collageMainPhoto { display: grid; place-items: center; min-height: 230px; border-radius: 10px; background: linear-gradient(145deg, #dce9de, #a9c3ad); color: #516f59; font-size: 12px; font-weight: 700; }
+.collageThumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.collageThumbs span { display: grid; place-items: center; min-height: 76px; border-radius: 8px; background: #e8efe8; color: #687c6d; font-size: 10px; }
+.basicData { align-self: start; margin: 0; padding: 5px 15px; border: 1px solid #e6ece7; border-radius: 10px; background: #fafcfa; }
+.basicData div { padding: 12px 0; border-bottom: 1px solid #e9eeea; }
+.basicData div:last-child { border-bottom: 0; }
+.basicData dt { margin-bottom: 5px; color: #7b8d80; font-size: 10px; }
+.basicData dd { margin: 0; color: #2e4937; font-size: 13px; font-weight: 700; }
+.available { padding: 5px 9px; border-radius: 20px; background: #e7f3e8; color: #267348; font-size: 10px; }
+.demoCaption { margin: 16px 0 0; color: #7b8a7f; font-size: 10px; line-height: 1.5; }
+@media (max-width: 560px) {
+  .specimenCard { grid-template-columns: 1fr; }
+  .specimenPhoto { min-height: 190px; }
+  .specimenInfo { padding: 18px; }
+  .collageModal { padding: 22px 16px; }
+  .collageLayout { grid-template-columns: 1fr; }
+  .collageMainPhoto { min-height: 210px; }
+}
