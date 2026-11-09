@@ -89,6 +89,14 @@ export default function DirectorioPage() {
     return () => { active = false; };
   }, [selected]);
 
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("traba");
+    if (slug) {
+      const match = pages.find((page) => page.slug === slug);
+      if (match) setSelected(match);
+    }
+  }, [pages]);
+
   const results = useMemo(() => {
     const q = query.trim().toLocaleLowerCase();
     if (!q) return pages;
@@ -121,7 +129,7 @@ export default function DirectorioPage() {
 
         {selected ? (
           <section className={styles.profile}>
-            <button className={styles.backButton} onClick={() => { setSelected(null); setCollage(null); }}>← Volver al directorio</button>
+            <button className={styles.backButton} onClick={() => { setSelected(null); setCollage(null); window.history.pushState({}, "", "/directorio/"); }}>← Volver al directorio</button>
             <div className={styles.profileHeader}>
               {selected.profile_photo_url ? <img className={styles.avatarImage} src={selected.profile_photo_url} alt={"Foto de " + selected.name} /> : <div className={styles.avatarFallback}>{selected.name.slice(0, 2).toUpperCase()}</div>}
               <div className={styles.profileIdentity}>
@@ -173,7 +181,7 @@ export default function DirectorioPage() {
         ) : loading ? <p className={styles.empty}>Cargando directorio…</p>
           : results.length === 0 ? <div className={styles.empty}><strong>{query ? "No encontramos páginas con esa búsqueda." : "Todavía no hay páginas públicas."}</strong><p>Las páginas aparecerán aquí cuando sus titulares las preparen y autoricen.</p><a className={styles.primaryButton} href="/login/">Iniciar sesión</a></div>
           : <div className={styles.cards}>{results.map((page) => <article className={styles.card} key={page.id}>
-            <button className={styles.cardOpen} onClick={() => { setSelected(page); setTab("Publicaciones"); }} aria-label={"Abrir página de " + page.name}>
+            <button className={styles.cardOpen} onClick={() => { setSelected(page); setTab("Publicaciones"); window.history.pushState({}, "", "/directorio/?traba=" + encodeURIComponent(page.slug)); }} aria-label={"Abrir página de " + page.name}>
               <div className={styles.cover + " " + styles.covergreen} style={page.cover_photo_url ? { backgroundImage: 'url("' + page.cover_photo_url + '")', backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
                 <span className={styles.coverLabel}>TRAVERO · PÁGINA DE TRABA</span>{page.profile_photo_url && <img className={styles.avatarSmallImage} src={page.profile_photo_url} alt="" />}
               </div>
