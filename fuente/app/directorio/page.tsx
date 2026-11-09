@@ -1,216 +1,187 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../../lib/supabase";
 import styles from "./page.module.css";
 
-type Breeder = {
-  id: number;
-  name: string;
-  location: string;
-  specialty: string;
-  claimed: boolean;
-  initials: string;
-  color: string;
+type DirectoryPage = {
+  id: string; slug: string; name: string; profile_photo_url: string | null;
+  cover_photo_url: string | null; description: string; country: string | null;
+  city: string | null; public_links: Record<string, string>;
+  claim_status: "unclaimed" | "claimed" | "verified";
 };
-
-const breeders: Breeder[] = [
-  { id: 1, name: "Traba de ejemplo 01", location: "Estados Unidos", specialty: "Cría y genealogía", claimed: true, initials: "01", color: "green" },
-  { id: 2, name: "Traba de ejemplo 02", location: "República Dominicana", specialty: "Criador", claimed: false, initials: "02", color: "gold" },
-  { id: 3, name: "Traba de ejemplo 03", location: "Puerto Rico", specialty: "Criador y productos", claimed: true, initials: "03", color: "blue" },
-];
+type SpecimenListing = {
+  id: string; page_id: string; display_name: string | null; plate_number: string | null;
+  photo_url: string; additional_photo_urls: string[]; weight: string | null;
+  father_label: string | null; mother_label: string | null; price: number | null;
+  availability: "available" | "sold" | "not_for_sale";
+};
+type PageOffering = {
+  id: string; page_id: string; offer_type: "product" | "service"; name: string;
+  description: string; photo_url: string; price: number | null;
+};
+const errorText = (e: unknown) =>
+  e && typeof e === "object" && "message" in e ? String(e.message) : "No se pudieron cargar los datos.";
+const claimText = (status: DirectoryPage["claim_status"]) =>
+  status === "verified" ? "Reclamada y verificada" : status === "claimed" ? "Reclamada" : "Sin reclamar";
 
 export default function DirectorioPage() {
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Breeder | null>(null);
+  const [pages, setPages] = useState<DirectoryPage[]>([]);
+  const [selected, setSelected] = useState<DirectoryPage | null>(null);
   const [tab, setTab] = useState("Publicaciones");
-  const [showCollage, setShowCollage] = useState(false);
+  const [catalog, setCatalog] = useState<SpecimenListing[]>([]);
+  const [offerings, setOfferings] = useState<PageOffering[]>([]);
+  const [collage, setCollage] = useState<SpecimenListing | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [itemsError, setItemsError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const { data, error } = await supabase().from("directory_pages")
+          .select("id,slug,name,profile_photo_url,cover_photo_url,description,country,city,public_links,claim_status")
+          .eq("publication_status", "published").order("name");
+        if (error) throw error;
+        if (active) setPages((data || []) as DirectoryPage[]);
+      } catch (e) {
+        if (active) setError(errorText(e));
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void load();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!selected) return;
+    let active = true;
+    async function loadPageContent() {
+      setItemsLoading(true);
+      setItemsError("");
+      try {
+        const db = supabase();
+        const [c, o] = await Promise.all([
+          db.from("directory_specimen_listings")
+            .select("id,page_id,display_name,plate_number,photo_url,additional_photo_urls,weight,father_label,mother_label,price,availability")
+            .eq("page_id", selected.id).eq("is_published", true),
+          db.from("page_offerings")
+            .select("id,page_id,offer_type,name,description,photo_url,price")
+            .eq("page_id", selected.id).eq("is_published", true),
+        ]);
+        if (c.error) throw c.error;
+        if (o.error) throw o.error;
+        if (active) {
+          setCatalog((c.data || []) as SpecimenListing[]);
+          setOfferings((o.data || []) as PageOffering[]);
+        }
+      } catch (e) {
+        if (active) setItemsError(errorText(e));
+      } finally {
+        if (active) setItemsLoading(false);
+      }
+    }
+    void loadPageContent();
+    return () => { active = false; };
+  }, [selected]);
 
   const results = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase();
-    if (!normalized) return breeders;
-    return breeders.filter((item) =>
-      `${item.name} ${item.location} ${item.specialty}`.toLocaleLowerCase().includes(normalized)
-    );
-  }, [query]);
+    const q = query.trim().toLocaleLowerCase();
+    if (!q) return pages;
+    return pages.filter((p) => [p.name, p.country || "", p.city || "", p.description || ""]
+      .join(" ").toLocaleLowerCase().includes(q));
+  }, [pages, query]);
+  const location = (p: DirectoryPage) => [p.city, p.country].filter(Boolean).join(", ") || "Ubicación no indicada";
 
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
-        <a className={styles.brand} href="/directorio/" aria-label="TRAVERO, inicio">
-          <span className={styles.brandMark}>T</span>
-          <span>TRAVERO</span>
-        </a>
-        <nav className={styles.nav}>
-          <a className={styles.navActive} href="/directorio/">Directorio</a>
-          <a href="/login/">Iniciar sesión</a>
-        </nav>
+        <a className={styles.brand} href="/directorio/" aria-label="TRAVERO, inicio"><span className={styles.brandMark}>T</span><span>TRAVERO</span></a>
+        <nav className={styles.nav}><a className={styles.navActive} href="/directorio/">Directorio</a><a href="/login/">Iniciar sesión</a></nav>
       </header>
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>DIRECTORIO TRAVERO</p>
           <h1>Encuentra tu comunidad.</h1>
-          <p className={styles.heroText}>
-            Conoce las trabas, sus publicaciones y sus ejemplares disponibles en un solo lugar.
-          </p>
-          <label className={styles.search}>
-            <span aria-hidden="true">⌕</span>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Busca por nombre, país o actividad"
-              aria-label="Buscar en el directorio"
-            />
-          </label>
+          <p className={styles.heroText}>Conoce las trabas, sus publicaciones y sus ejemplares disponibles en un solo lugar.</p>
+          <label className={styles.search}><span aria-hidden="true">⌕</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Busca por nombre, país o actividad" aria-label="Buscar en el directorio" /></label>
         </div>
-        <div className={styles.heroArt} aria-hidden="true">
-          <div className={styles.artCircle} />
-          <div className={styles.artCard}>
-            <span className={styles.artLabel}>TRABAS</span>
-            <strong>Conectadas<br />por TRAVERO</strong>
-            <span className={styles.artLine} />
-          </div>
-          <span className={styles.artDot} />
-        </div>
+        <div className={styles.heroArt} aria-hidden="true"><div className={styles.artCircle} /><div className={styles.artCard}><span className={styles.artLabel}>TRABAS</span><strong>Conectadas<br />por TRAVERO</strong><span className={styles.artLine} /></div><span className={styles.artDot} /></div>
       </section>
 
       <section className={styles.directory}>
-        <div className={styles.sectionHeading}>
-          <div>
-            <p className={styles.eyebrow}>EXPLORA</p>
-            <h2>Directorio de trabas</h2>
-          </div>
-          <span className={styles.resultCount}>{results.length} páginas</span>
-        </div>
-
-        <div className={styles.notice}>
-          <span className={styles.noticeIcon}>i</span>
-          <p>Maqueta de demostración: los nombres, imágenes y publicaciones reales se añadirán con autorización.</p>
-        </div>
+        <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>EXPLORA</p><h2>Directorio de trabas</h2></div><span className={styles.resultCount}>{loading ? "…" : results.length + " páginas"}</span></div>
+        <div className={styles.notice}><span className={styles.noticeIcon}>i</span><p>Solo se muestran páginas y contenido que el titular haya autorizado para publicación.</p></div>
+        {error && <p className={styles.error} role="alert">{error}</p>}
 
         {selected ? (
           <section className={styles.profile}>
-            <button className={styles.backButton} onClick={() => setSelected(null)}>← Volver al directorio</button>
+            <button className={styles.backButton} onClick={() => { setSelected(null); setCollage(null); }}>← Volver al directorio</button>
             <div className={styles.profileHeader}>
-              <div className={`${styles.avatar} ${styles[selected.color]}`}><span>{selected.initials}</span></div>
+              {selected.profile_photo_url ? <img className={styles.avatarImage} src={selected.profile_photo_url} alt={"Foto de " + selected.name} /> : <div className={styles.avatarFallback}>{selected.name.slice(0, 2).toUpperCase()}</div>}
               <div className={styles.profileIdentity}>
-                <div className={styles.profileTitle}>
-                  <h2>{selected.name}</h2>
-                  <span className={selected.claimed ? styles.claimed : styles.unclaimed}>
-                    {selected.claimed ? "Página reclamada" : "Disponible para reclamar"}
-                  </span>
-                </div>
-                <p>{selected.location} <span>·</span> {selected.specialty}</p>
-                <p className={styles.profileIntro}>Presentación de la traba y enlaces oficiales. El titular podrá completar y autorizar la información de su página.</p>
+                <div className={styles.profileTitle}><h2>{selected.name}</h2><span className={selected.claim_status === "unclaimed" ? styles.unclaimed : styles.claimed}>{claimText(selected.claim_status)}</span></div>
+                <p>{location(selected)}</p>
+                {selected.description && <p className={styles.profileIntro}>{selected.description}</p>}
+                {selected.public_links && Object.entries(selected.public_links).length > 0 && <div className={styles.socialLinks}>{Object.entries(selected.public_links).map(([label, url]) => <a key={label} href={url} target="_blank" rel="noreferrer">{label}</a>)}</div>}
                 <a className={styles.primaryButton} href="/login/">Entrar / reclamar esta página</a>
               </div>
             </div>
 
             <div className={styles.tabs} role="tablist" aria-label="Secciones de la página">
-              {["Publicaciones", "Catálogo TRAVERO", "Productos y servicios"].map((item) => (
-                <button
-                  key={item}
-                  className={tab === item ? styles.tabActive : styles.tab}
-                  onClick={() => setTab(item)}
-                  role="tab"
-                  aria-selected={tab === item}
-                >
-                  {item}
-                </button>
-              ))}
+              {["Publicaciones", "Catálogo TRAVERO", "Productos y servicios"].map((item) => <button key={item} className={tab === item ? styles.tabActive : styles.tab} onClick={() => { setTab(item); setCollage(null); }} role="tab" aria-selected={tab === item}>{item}</button>)}
             </div>
+            {itemsError && <p className={styles.error} role="alert">{itemsError}</p>}
+            {itemsLoading && <p className={styles.empty}>Cargando contenido de la página…</p>}
 
-            {tab === "Publicaciones" && (
-              <div className={styles.postGrid}>
-                {[1, 2, 3].map((post) => (
-                  <article className={styles.postCard} key={post}>
-                    <div className={styles.postImage}><span>Publicación de muestra</span></div>
-                    <div className={styles.postBody}><strong>Publicación autorizada {post}</strong><p>Vista de ejemplo para mostrar cómo aparecería el contenido de la traba.</p></div>
-                  </article>
-                ))}
-              </div>
-            )}
-            {tab === "Catálogo TRAVERO" && (
-              <div className={styles.catalogSection}>
-                <p className={styles.catalogIntro}>Los ejemplares registrados en TRAVERO que el titular autorice se muestran en este catálogo.</p>
-                <article className={styles.specimenCard}>
-                  <div className={styles.specimenPhoto} role="img" aria-label="Foto de muestra del ejemplar">
-                    <span>Foto del ejemplar</span>
+            {!itemsLoading && tab === "Publicaciones" && <div className={styles.catalogPlaceholder}><span className={styles.catalogIcon}>P</span><div><strong>Publicaciones autorizadas</strong><p>Esta sección queda lista para conectar las publicaciones que el titular autorice.</p></div></div>}
+
+            {!itemsLoading && tab === "Catálogo TRAVERO" && (catalog.length === 0
+              ? <div className={styles.catalogPlaceholder}><span className={styles.catalogIcon}>T</span><div><strong>Aún no hay ejemplares publicados</strong><p>Los ejemplares aparecerán aquí cuando el titular los seleccione.</p></div></div>
+              : <div className={styles.catalogSection}><p className={styles.catalogIntro}>Abre una ficha para ver el collage y sus datos básicos.</p><div className={styles.specimenGrid}>
+                {catalog.map((s) => <article className={styles.specimenCard} key={s.id}>
+                  <img className={styles.specimenPhoto} src={s.photo_url} alt={s.display_name || s.plate_number || "Foto del ejemplar"} />
+                  <div className={styles.specimenInfo}><span className={styles.specimenKicker}>CATÁLOGO TRAVERO</span><h3>{s.display_name || "Placa " + s.plate_number}</h3>
+                    {s.display_name && s.plate_number && <p className={styles.specimenPlate}>Placa: <strong>{s.plate_number}</strong></p>}
+                    <p className={styles.specimenSummary}>{s.availability === "available" ? "Disponible" : s.availability === "sold" ? "Vendido" : "No está a la venta"}</p>
+                    <button className={styles.primaryButton} onClick={() => setCollage(s)}>Ver collage y datos</button>
                   </div>
-                  <div className={styles.specimenInfo}>
-                    <span className={styles.specimenKicker}>CATÁLOGO TRAVERO</span>
-                    <h3>Ejemplar de muestra</h3>
-                    <p className={styles.specimenPlate}>Placa: <strong>B-000</strong></p>
-                    <p className={styles.specimenSummary}>Foto y datos básicos disponibles en su ficha.</p>
-                    <button className={styles.primaryButton} onClick={() => setShowCollage(true)}>Ver collage y datos</button>
-                  </div>
-                </article>
-                {showCollage && (
-                  <div className={styles.modalBackdrop} role="presentation">
-                    <section className={styles.collageModal} role="dialog" aria-modal="true" aria-labelledby="collage-title">
-                      <button className={styles.closeButton} onClick={() => setShowCollage(false)} aria-label="Cerrar collage">×</button>
-                      <p className={styles.eyebrow}>FICHA DEL EJEMPLAR</p>
-                      <h3 id="collage-title">Ejemplar de muestra · B-000</h3>
-                      <div className={styles.collageLayout}>
-                        <div className={styles.collagePhotos}>
-                          <div className={styles.collageMainPhoto}>Foto principal</div>
-                          <div className={styles.collageThumbs}>
-                            <span>Foto 2</span><span>Foto 3</span><span>Foto 4</span>
-                          </div>
-                        </div>
-                        <dl className={styles.basicData}>
-                          <div><dt>Placa</dt><dd>B-000</dd></div>
-                          <div><dt>Peso</dt><dd>—</dd></div>
-                          <div><dt>Padre</dt><dd>—</dd></div>
-                          <div><dt>Madre</dt><dd>—</dd></div>
-                          <div><dt>Disponibilidad</dt><dd><span className={styles.available}>Disponible</span></dd></div>
-                        </dl>
-                      </div>
-                      <p className={styles.demoCaption}>Collage de demostración. La ficha real mostrará la foto y los datos autorizados por su dueño.</p>
-                    </section>
-                  </div>
-                )}
-              </div>
-            )}
-            {tab === "Productos y servicios" && (
-              <div className={styles.catalogPlaceholder}>
-                <span className={styles.catalogIcon}>+</span>
-                <div><strong>Productos y servicios de la traba</strong><p>Se añadirán manualmente con sus fotos; estarán separados del catálogo genealógico.</p></div>
-              </div>
-            )}
+                </article>)}
+              </div></div>)}
+
+            {!itemsLoading && tab === "Productos y servicios" && (offerings.length === 0
+              ? <div className={styles.catalogPlaceholder}><span className={styles.catalogIcon}>+</span><div><strong>No hay productos o servicios publicados</strong><p>El titular puede añadirlos por separado del catálogo genealógico.</p></div></div>
+              : <div className={styles.offeringGrid}>{offerings.map((o) => <article className={styles.offeringCard} key={o.id}><img src={o.photo_url} alt={o.name} /><div><span className={styles.specimenKicker}>{o.offer_type === "product" ? "PRODUCTO" : "SERVICIO"}</span><h3>{o.name}</h3><p>{o.description}</p>{o.price !== null && <strong>{o.price}</strong>}</div></article>)}</div>)}
+
+            {collage && <div className={styles.modalBackdrop} role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setCollage(null); }}>
+              <section className={styles.collageModal} role="dialog" aria-modal="true" aria-labelledby="collage-title">
+                <button className={styles.closeButton} onClick={() => setCollage(null)} aria-label="Cerrar collage">×</button>
+                <p className={styles.eyebrow}>FICHA DEL EJEMPLAR</p><h3 id="collage-title">{collage.display_name || "Placa " + collage.plate_number}</h3>
+                <div className={styles.collageLayout}><div className={styles.collagePhotos}>
+                  <img className={styles.collageMainPhoto} src={collage.photo_url} alt={collage.display_name || collage.plate_number || "Foto del ejemplar"} />
+                  <div className={styles.collageThumbs}>{(collage.additional_photo_urls || []).map((url, i) => <img key={url + "-" + i} src={url} alt={"Foto adicional " + (i + 1)} />)}</div>
+                </div>
+                <dl className={styles.basicData}><div><dt>Placa</dt><dd>{collage.plate_number || "—"}</dd></div><div><dt>Peso</dt><dd>{collage.weight || "—"}</dd></div><div><dt>Padre</dt><dd>{collage.father_label || "—"}</dd></div><div><dt>Madre</dt><dd>{collage.mother_label || "—"}</dd></div><div><dt>Disponibilidad</dt><dd><span className={styles.available}>{collage.availability === "available" ? "Disponible" : collage.availability === "sold" ? "Vendido" : "No está a la venta"}</span></dd></div></dl></div>
+              </section>
+            </div>}
           </section>
-        ) : (
-          <div className={styles.cards}>
-            {results.map((breeder) => (
-              <article className={styles.card} key={breeder.id}>
-                <button className={styles.cardOpen} onClick={() => { setSelected(breeder); setTab("Publicaciones"); }} aria-label={`Abrir página de ${breeder.name}`}>
-                  <div className={`${styles.cover} ${styles[`cover${breeder.color}`]}`}>
-                    <span className={styles.coverLabel}>TRAVERO · PÁGINA DE TRABA</span>
-                    <div className={`${styles.avatarSmall} ${styles[breeder.color]}`}>{breeder.initials}</div>
-                  </div>
-                  <div className={styles.cardContent}>
-                    <div className={styles.cardTitleRow}>
-                      <h3>{breeder.name}</h3>
-                      <span className={breeder.claimed ? styles.claimed : styles.unclaimed}>
-                        {breeder.claimed ? "Reclamada" : "Sin reclamar"}
-                      </span>
-                    </div>
-                    <p className={styles.location}>{breeder.location}</p>
-                    <p className={styles.specialty}>{breeder.specialty}</p>
-                    <span className={styles.cardLink}>Ver página <span aria-hidden="true">→</span></span>
-                  </div>
-                </button>
-              </article>
-            ))}
-            {results.length === 0 && <p className={styles.empty}>No encontramos páginas con esa búsqueda.</p>}
-          </div>
-        )}
+        ) : loading ? <p className={styles.empty}>Cargando directorio…</p>
+          : results.length === 0 ? <div className={styles.empty}><strong>{query ? "No encontramos páginas con esa búsqueda." : "Todavía no hay páginas públicas."}</strong><p>Las páginas aparecerán aquí cuando sus titulares las preparen y autoricen.</p><a className={styles.primaryButton} href="/login/">Iniciar sesión</a></div>
+          : <div className={styles.cards}>{results.map((page) => <article className={styles.card} key={page.id}>
+            <button className={styles.cardOpen} onClick={() => { setSelected(page); setTab("Publicaciones"); }} aria-label={"Abrir página de " + page.name}>
+              <div className={styles.cover + " " + styles.covergreen} style={page.cover_photo_url ? { backgroundImage: 'url("' + page.cover_photo_url + '")', backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
+                <span className={styles.coverLabel}>TRAVERO · PÁGINA DE TRABA</span>{page.profile_photo_url && <img className={styles.avatarSmallImage} src={page.profile_photo_url} alt="" />}
+              </div>
+              <div className={styles.cardContent}><div className={styles.cardTitleRow}><h3>{page.name}</h3><span className={page.claim_status === "unclaimed" ? styles.unclaimed : styles.claimed}>{claimText(page.claim_status)}</span></div><p className={styles.location}>{location(page)}</p>{page.description && <p className={styles.specialty}>{page.description}</p>}<span className={styles.cardLink}>Ver página <span aria-hidden="true">→</span></span></div>
+            </button>
+          </article>)}</div>}
       </section>
-
-      <footer className={styles.footer}>
-        <span>TRAVERO</span>
-        <span>Directorio · Ejemplares · Comunidad</span>
-      </footer>
+      <footer className={styles.footer}><span>TRAVERO</span><span>Directorio · Ejemplares · Comunidad</span></footer>
     </main>
   );
 }
