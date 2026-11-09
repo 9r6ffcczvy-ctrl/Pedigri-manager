@@ -18,22 +18,32 @@ Este documento describe la estructura implementada en Supabase para conectar el 
 - Solo se publican los ejemplares que el titular seleccione y los datos que autorice.
 - La base rechaza una ficha pública si falta la foto o tanto el nombre como el número de placa.
 
-## Anuncios inteligentes del directorio
+## Anuncios inteligentes y plan para anunciantes
 
 La publicidad se diseña como parte del directorio y de cada módulo:
 
 1. **Relevancia por contenido:** la página, sección o búsqueda define primero las categorías del anuncio. Ejemplos: placas → placas y accesorios; pollitos → vacunas y alimento.
-2. **Elegibilidad por localidad:** la IP de la solicitud puede estimar país, estado/provincia y ciudad. Esa zona sirve para filtrar los proveedores que atienden la demarcación; el contenido nunca debe mostrar un suplidor de otra zona solo por falta de inventario local.
-3. **Campañas visibles:** solo anuncios aprobados, activos, dentro de su fecha y zona de servicio; siempre identificados como **Patrocinado**.
-4. **Sin cruzar datos privados:** se usa la categoría del módulo o contenido público, no las notas privadas de genealogía o cuido.
-5. **Sin anuncios fuera de zona:** si la ubicación es demasiado imprecisa, no se fuerza una coincidencia local. Solo se admitirá una cobertura más amplia si el anunciante la declara expresamente.
+2. **Elegibilidad por localidad:** la IP de la solicitud puede estimar país, estado/provincia y ciudad. Esa zona sirve para filtrar proveedores que atiendan la demarcación. Solo se admite una cobertura más amplia si el anunciante la declaró expresamente.
+3. **Campañas visibles:** únicamente campañas aprobadas, activas, dentro de su fecha y zona de servicio. Cada anuncio llevará la etiqueta **Publicidad** y podrá identificar al patrocinador.
+4. **Sin cruzar datos privados:** se usa la categoría del módulo o el contenido público, nunca las notas privadas de genealogía o cuido.
+5. **Sin anuncios fuera de zona:** si la ubicación es imprecisa y no se puede confirmar una cobertura válida, no se fuerza una coincidencia.
 
-La geolocalización por IP es aproximada y puede señalar otra ciudad por VPN, red móvil o proveedor de internet. El visitante debe poder corregir la zona manualmente. La IP se procesa en el borde/API para obtener una zona aproximada y no se guarda en la base de datos ni en métricas. No se pide ni se infiere una dirección física exacta. Si la persona elige y guarda una zona manualmente, esa preferencia podrá usarse en visitas posteriores.
+La geolocalización por IP es aproximada y puede fallar por VPN, red móvil o proveedor de internet. El visitante podrá corregir la zona manualmente. La IP se procesa en el borde/API solo para estimar la zona; no se guarda en la base de datos ni en las métricas, y no se pide ni se infiere una dirección física exacta. La página estática no decidirá la ubicación ni seleccionará campañas desde el navegador. La API recibirá contexto del módulo y metadatos geográficos confiables del servidor/proveedor, y devolverá únicamente campañas elegibles.
 
-La página estática no debe decidir la ubicación ni seleccionar campañas directamente desde el navegador. La API/función de anuncios recibirá el contexto del módulo y utilizará metadatos de geolocalización confiables del servidor o proveedor; devolverá solamente campañas elegibles y registrará métricas agregadas sin IP. El modelo de campañas necesitará categorías de contenido, zonas atendidas, fechas, estado de aprobación, creatividad y enlace de destino.
+### Recorrido del anunciante
 
-Todavía no hay campañas, geolocalización conectada ni una API de anuncios en la base. Los espacios y la selección reales se activarán cuando se cree ese modelo y su endpoint; mientras tanto no se mostrarán anuncios ficticios.
+El directorio incluirá una entrada **Anúnciate en TRAVERO** con dos opciones:
 
+- **Configurar y pagar ahora:** el anunciante crea su campaña, selecciona categorías temáticas y zonas donde sí ofrece servicio, carga el material (tarjeta/enlace y, cuando se admita, video), define duración y presupuesto, revisa una vista previa y paga mediante un checkout seguro. El estado será “pagada, pendiente de revisión” hasta que TRAVERO apruebe el contenido y la cobertura. Los datos de tarjeta se manejarán en el proveedor de pago; TRAVERO guardará el estado y la referencia de la transacción.
+- **Solicitar ayuda a ventas:** el anunciante deja negocio, persona de contacto, teléfono/correo, producto o servicio, categorías y localidades que cubre, y un presupuesto o periodo tentativo. Esto crea una solicitud para el departamento comercial; no genera un cobro hasta que ventas acuerde y confirme la campaña. La bandeja comercial prevista es ventas@traveroapp.com, con copia y capacidad de intervención para Alex.
+
+Ventas podrá ayudar a crear o ajustar campañas, pero la selección automática seguirá limitada por la categoría actual y la cobertura que el anunciante declaró. El flujo debe distinguir claramente entre solicitud, cotización, pago recibido, revisión/aprobación, campaña activa y finalizada/cancelada.
+
+### Datos y límites de la API publicitaria
+
+Antes de mostrar anuncios reales se crearán los componentes de anunciantes, campañas, creatividades, categorías, zonas atendidas, órdenes/pagos y solicitudes a ventas. La API de entrega aplicará categoría y zona; la API comercial registrará el flujo de pago o la solicitud de contacto. Las métricas de impresiones y clics serán agregadas y no conservarán la IP. Precios, formatos disponibles, duración mínima, políticas de reembolso y comisiones de publicidad siguen pendientes de definición comercial.
+
+Todavía no hay campañas, geolocalización conectada, checkout ni API publicitaria. Mientras se implementan no se mostrarán anuncios ficticios.
 ## Tablas implementadas
 
 ### directory_pages
@@ -75,6 +85,7 @@ Las columnas de foto están listas para recibir una URL; falta conectar la carga
 3. Crear el flujo del dueño para preparar y publicar su página, fichas de ejemplares y productos/servicios.
 4. Añadir carga de fotos con permisos de Storage.
 5. Elegir la fuente confiable de geolocalización del hosting/API y confirmar qué precisión entrega sin guardar IP.
-6. Crear el modelo de campañas y la API que cruce contexto del módulo, categorías y zona atendida; admitir corrección manual de zona.
-7. Añadir espacios patrocinados al directorio y módulos; medir impresiones/clics de forma agregada y sin IP.
-8. Implementar publicaciones de redes cuando esté definida la autorización de importación.
+6. Crear el modelo/API de anunciantes, campañas, categorías, cobertura, pagos y solicitudes comerciales.
+7. Implementar el checkout directo y el flujo alternativo de ventas, incluida su revisión y aprobación.
+8. Añadir espacios **Publicidad** al directorio y módulos; medir impresiones/clics de forma agregada y sin IP.
+9. Implementar publicaciones de redes cuando esté definida la autorización de importación.
