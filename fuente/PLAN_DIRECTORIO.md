@@ -20,15 +20,19 @@ Este documento describe la estructura implementada en Supabase para conectar el 
 
 ## Anuncios inteligentes del directorio
 
-El plan de anuncios se integra desde esta etapa:
+La publicidad se diseña como parte del directorio y de cada módulo:
 
-- El contenido y la sección actual dan el contexto principal: por ejemplo, placas y accesorios al consultar placas; alimento y vacunas al consultar pollitos.
-- La ubicación del visitante limita los patrocinadores elegibles: país, estado/provincia y ciudad o demarcación cuando esté disponible. Solo aparecen proveedores que atiendan esa zona.
-- Los anuncios se marcarán como patrocinados y solo se mostrarán campañas activas y aprobadas.
-- El sistema usará categorías de la página o del módulo, no notas privadas de genealogía o cuido. No guardará la dirección IP en los registros de anuncios.
-- Si no hay un patrocinador que cubra la zona, no se mostrará una oferta de otra demarcación.
+1. **Relevancia por contenido:** la página, sección o búsqueda define primero las categorías del anuncio. Ejemplos: placas → placas y accesorios; pollitos → vacunas y alimento.
+2. **Elegibilidad por localidad:** la IP de la solicitud puede estimar país, estado/provincia y ciudad. Esa zona sirve para filtrar los proveedores que atienden la demarcación; el contenido nunca debe mostrar un suplidor de otra zona solo por falta de inventario local.
+3. **Campañas visibles:** solo anuncios aprobados, activos, dentro de su fecha y zona de servicio; siempre identificados como **Patrocinado**.
+4. **Sin cruzar datos privados:** se usa la categoría del módulo o contenido público, no las notas privadas de genealogía o cuido.
+5. **Sin anuncios fuera de zona:** si la ubicación es demasiado imprecisa, no se fuerza una coincidencia local. Solo se admitirá una cobertura más amplia si el anunciante la declara expresamente.
 
-La base actual todavía no incluye campañas publicitarias. Antes de conectarlas se añadirán campañas, creatividades, categorías, zonas atendidas y medición de impresiones/clics. Los espacios iniciales irán en el directorio y en las páginas de las trabas; después se adaptarán a los módulos relacionados.
+La geolocalización por IP es aproximada y puede señalar otra ciudad por VPN, red móvil o proveedor de internet. El visitante debe poder corregir la zona manualmente. La IP se procesa en el borde/API para obtener una zona aproximada y no se guarda en la base de datos ni en métricas. No se pide ni se infiere una dirección física exacta. Si la persona elige y guarda una zona manualmente, esa preferencia podrá usarse en visitas posteriores.
+
+La página estática no debe decidir la ubicación ni seleccionar campañas directamente desde el navegador. La API/función de anuncios recibirá el contexto del módulo y utilizará metadatos de geolocalización confiables del servidor o proveedor; devolverá solamente campañas elegibles y registrará métricas agregadas sin IP. El modelo de campañas necesitará categorías de contenido, zonas atendidas, fechas, estado de aprobación, creatividad y enlace de destino.
+
+Todavía no hay campañas, geolocalización conectada ni una API de anuncios en la base. Los espacios y la selección reales se activarán cuando se cree ese modelo y su endpoint; mientras tanto no se mostrarán anuncios ficticios.
 
 ## Tablas implementadas
 
@@ -57,6 +61,8 @@ Las tres tablas nuevas tienen RLS. Las páginas empiezan en borrador; las fichas
 El proyecto no permitía crear una rama de base de datos con su plan actual. Por eso las tablas se añadieron al proyecto activo, vacías y con RLS y permisos explícitos. Las migraciones remotas registradas son:
 - `20261109090223_create_directory_pages_and_public_catalog`
 - `20261109090328_index_directory_page_owner_foreign_keys`
+- `20261109090700_add_gallery_photos_to_directory_specimens`
+- `20261109091225_allow_owners_to_find_directory_page`
 
 El 9 de noviembre de 2026 se quitaron los permisos automáticos a `anon` y `authenticated` para tablas y secuencias nuevas en `public`. Esto no cambió las tablas existentes. Cada objeto nuevo requiere permisos explícitos junto con RLS.
 
@@ -68,5 +74,7 @@ Las columnas de foto están listas para recibir una URL; falta conectar la carga
 2. Conectar **Catálogo TRAVERO** a las fichas publicadas y abrir el collage con foto y datos.
 3. Crear el flujo del dueño para preparar y publicar su página, fichas de ejemplares y productos/servicios.
 4. Añadir carga de fotos con permisos de Storage.
-5. Añadir campañas publicitarias por categoría y demarcación; medir impresiones/clics sin guardar IP.
-6. Implementar publicaciones de redes cuando esté definida la autorización de importación.
+5. Elegir la fuente confiable de geolocalización del hosting/API y confirmar qué precisión entrega sin guardar IP.
+6. Crear el modelo de campañas y la API que cruce contexto del módulo, categorías y zona atendida; admitir corrección manual de zona.
+7. Añadir espacios patrocinados al directorio y módulos; medir impresiones/clics de forma agregada y sin IP.
+8. Implementar publicaciones de redes cuando esté definida la autorización de importación.
