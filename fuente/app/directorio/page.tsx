@@ -23,6 +23,7 @@ export default function DirectorioPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Breeder | null>(null);
   const [tab, setTab] = useState("Publicaciones");
+  const [showCollage, setShowCollage] = useState(false);
 
   const results = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
@@ -130,9 +131,45 @@ export default function DirectorioPage() {
               </div>
             )}
             {tab === "Catálogo TRAVERO" && (
-              <div className={styles.catalogPlaceholder}>
-                <span className={styles.catalogIcon}>T</span>
-                <div><strong>Los ejemplares registrados en TRAVERO aparecerán aquí</strong><p>El dueño escogerá cuáles mostrar y qué datos publicar.</p></div>
+              <div className={styles.catalogSection}>
+                <p className={styles.catalogIntro}>Los ejemplares registrados en TRAVERO que el titular autorice se muestran en este catálogo.</p>
+                <article className={styles.specimenCard}>
+                  <div className={styles.specimenPhoto} role="img" aria-label="Foto de muestra del ejemplar">
+                    <span>Foto del ejemplar</span>
+                  </div>
+                  <div className={styles.specimenInfo}>
+                    <span className={styles.specimenKicker}>CATÁLOGO TRAVERO</span>
+                    <h3>Ejemplar de muestra</h3>
+                    <p className={styles.specimenPlate}>Placa: <strong>B-000</strong></p>
+                    <p className={styles.specimenSummary}>Foto y datos básicos disponibles en su ficha.</p>
+                    <button className={styles.primaryButton} onClick={() => setShowCollage(true)}>Ver collage y datos</button>
+                  </div>
+                </article>
+                {showCollage && (
+                  <div className={styles.modalBackdrop} role="presentation">
+                    <section className={styles.collageModal} role="dialog" aria-modal="true" aria-labelledby="collage-title">
+                      <button className={styles.closeButton} onClick={() => setShowCollage(false)} aria-label="Cerrar collage">×</button>
+                      <p className={styles.eyebrow}>FICHA DEL EJEMPLAR</p>
+                      <h3 id="collage-title">Ejemplar de muestra · B-000</h3>
+                      <div className={styles.collageLayout}>
+                        <div className={styles.collagePhotos}>
+                          <div className={styles.collageMainPhoto}>Foto principal</div>
+                          <div className={styles.collageThumbs}>
+                            <span>Foto 2</span><span>Foto 3</span><span>Foto 4</span>
+                          </div>
+                        </div>
+                        <dl className={styles.basicData}>
+                          <div><dt>Placa</dt><dd>B-000</dd></div>
+                          <div><dt>Peso</dt><dd>—</dd></div>
+                          <div><dt>Padre</dt><dd>—</dd></div>
+                          <div><dt>Madre</dt><dd>—</dd></div>
+                          <div><dt>Disponibilidad</dt><dd><span className={styles.available}>Disponible</span></dd></div>
+                        </dl>
+                      </div>
+                      <p className={styles.demoCaption}>Collage de demostración. La ficha real mostrará la foto y los datos autorizados por su dueño.</p>
+                    </section>
+                  </div>
+                )}
               </div>
             )}
             {tab === "Productos y servicios" && (
