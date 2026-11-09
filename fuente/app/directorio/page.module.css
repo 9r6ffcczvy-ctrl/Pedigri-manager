@@ -154,3 +154,28 @@
   .collageLayout { grid-template-columns: 1fr; }
   .collageMainPhoto { min-height: 210px; }
 }
+
+.error { color: #a32121; margin: 14px 0; font-size: 13px; }
+.avatarImage, .avatarFallback { display: grid; flex: none; place-items: center; width: 112px; height: 112px; border: 5px solid #f1f5f1; border-radius: 50%; object-fit: cover; color: #fff; font-size: 25px; font-weight: 800; background: #2e744c; }
+.avatarSmallImage { position: absolute; right: 18px; bottom: -22px; width: 58px; height: 58px; border: 4px solid #fff; border-radius: 50%; object-fit: cover; box-shadow: 0 3px 9px #10251a25; }
+.socialLinks { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.socialLinks a { padding: 7px 10px; border-radius: 18px; background: #edf4ee; color: #267348; font-size: 11px; font-weight: 700; text-decoration: none; }
+.specimenGrid, .offeringGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.specimenPhoto { display: block; width: 100%; height: 100%; min-height: 210px; object-fit: cover; background: #e8efe8; color: transparent; }
+.specimenCard { grid-template-columns: minmax(160px, 230px) 1fr; }
+.offeringCard { overflow: hidden; border: 1px solid #e5ece6; border-radius: 13px; background: #fff; }
+.offeringCard img { display: block; width: 100%; height: 170px; object-fit: cover; background: #e8efe8; }
+.offeringCard > div { padding: 14px; }
+.offeringCard h3 { margin: 8px 0; color: #294633; font-size: 15px; }
+.offeringCard p { color: #718276; font-size: 12px; }
+.collageMainPhoto { display: block; width: 100%; min-height: 230px; max-height: 350px; object-fit: contain; border-radius: 10px; background: #e8efe8; }
+.collageThumbs img { display: block; width: 100%; min-height: 76px; height: 86px; object-fit: cover; border-radius: 8px; background: #e8efe8; }
+@media (max-width: 720px) {
+  .specimenGrid, .offeringGrid { grid-template-columns: 1fr; }
+  .specimenCard { grid-template-columns: minmax(140px, 40%) 1fr; }
+}
+@media (max-width: 520px) {
+  .avatarImage, .avatarFallback { width: 82px; height: 82px; }
+  .specimenCard { grid-template-columns: 1fr; }
+  .specimenPhoto { min-height: 190px; }
+}
