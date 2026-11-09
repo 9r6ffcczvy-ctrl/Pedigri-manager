@@ -1,6 +1,6 @@
 # Modelo de datos para el directorio TRAVERO
 
-Este documento prepara la conexión del prototipo con Supabase. Es una propuesta de trabajo; todavía no crea ni modifica tablas.
+Este documento describe la estructura implementada en Supabase para conectar el prototipo. Las tablas se crearon vacías el 9 de noviembre de 2026; no se copiaron ni publicaron registros de usuarios.
 
 ## Reglas de la página
 
@@ -16,40 +16,44 @@ Este documento prepara la conexión del prototipo con Supabase. Es una propuesta
 - En el menú de la página, el usuario abre **Catálogo TRAVERO** y desde la ficha selecciona **Ver collage y datos**.
 - El collage puede mostrar foto principal, fotos adicionales, placa o nombre, peso, padre, madre y disponibilidad.
 - Solo se publican los ejemplares que el titular seleccione y los datos que autorice.
-- Un ejemplar sin foto o sin nombre/placa no se publica en el catálogo.
+- La base rechaza una ficha pública si falta la foto o tanto el nombre como el número de placa.
 
-## Tablas propuestas
+## Tablas implementadas
 
-### traba_pages
+### directory_pages
 
-Una fila por página de traba. Incluye titular, nombre, slug, presentación, foto de perfil/portada, país/ciudad, enlaces sociales y estado de reclamación/publicación.
+Una fila por página de traba: titular, nombre, slug, presentación, foto de perfil/portada, país/ciudad, enlaces sociales y estados de reclamación/publicación.
 
 ### directory_specimen_listings
 
-Una fila por ejemplar que el titular decide mostrar. Relaciona la página con el ejemplar interno e incluye los datos públicos autorizados: foto, nombre o placa, peso, datos de padres, precio y disponibilidad.
+Una fila por ejemplar que el titular decide mostrar. Se relaciona con su página y con el registro privado del ejemplar; guarda la foto y los datos públicos autorizados. La API pública no recibe el identificador interno del ejemplar ni del titular.
 
 ### page_offerings
 
-Productos y servicios manuales de la traba: nombre, tipo, descripción, fotos, precio opcional y estado de publicación. No se mezclan con genealogía ni con ejemplares.
+Productos y servicios manuales de la traba: nombre, tipo, descripción, foto, precio opcional y estado de publicación. No se mezclan con genealogía ni con ejemplares.
 
-### directory_posts (fase posterior)
+### Publicaciones de redes
 
-Publicaciones importadas o enlazadas desde redes, con origen, fecha, material autorizado y estado de publicación.
+Quedan para una fase posterior. Se cargarán o enlazarán con autorización del titular.
 
 ## Privacidad y acceso
 
-La tabla actual specimens mantiene su acceso privado por propietario, personal autorizado y administración. El directorio no consulta esa tabla como visitante público.
+La tabla actual specimens conserva sus permisos privados por propietario, personal autorizado y administración. El directorio no permite consultas públicas directas a specimens: solo muestra los datos guardados en una ficha de catálogo publicada.
 
-Todas las nuevas tablas tendrán Row Level Security. El público solo podrá consultar páginas, fichas de catálogo, productos y publicaciones marcadas expresamente como publicadas. Las cuentas propietarias solo podrán administrar sus propias páginas y elementos. Las publicaciones empiezan en borrador/privadas.
+Las tres tablas nuevas tienen RLS. Las páginas empiezan en borrador; las fichas de ejemplares y productos empiezan sin publicar. El público puede leer las páginas y los elementos publicados. El titular puede administrar los suyos; los campos internos de titular y ejemplar no tienen permiso de lectura para la API pública.
 
-Las fotos públicas se guardarán con una política de almacenamiento que solo permita mostrar medios autorizados. Ninguna clave secreta ni service_role se usará en el navegador.
+El proyecto no permitía crear una rama de base de datos con su plan actual. Por eso las tablas se añadieron al proyecto activo, vacías y con RLS y permisos explícitos. Las migraciones remotas registradas son:
+- `20261109090223_create_directory_pages_and_public_catalog`
+- `20261109090223_index_directory_page_owner_foreign_keys`
 
-Las tablas nuevas necesitarán permisos explícitos para la Supabase Data API. El 9 de noviembre de 2026 se revocaron los permisos automáticos de tablas y secuencias nuevas para anon y authenticated en public. Esto no cambia los permisos de las tablas existentes; service_role conserva sus permisos. Cada tabla nueva recibirá solo los GRANT necesarios, junto con RLS.
+El 9 de noviembre de 2026 se quitaron los permisos automáticos a `anon` y `authenticated` para tablas y secuencias nuevas en `public`. Esto no cambió las tablas existentes. Cada objeto nuevo requiere permisos explícitos junto con RLS.
 
-## Orden de implementación
+Las columnas de foto están listas para recibir una URL; falta conectar la carga de imágenes a Supabase Storage. Ninguna clave secreta ni `service_role` se usa en el navegador.
 
-1. Revisar y aprobar este modelo.
-2. Crear las tablas y políticas en un entorno de desarrollo cuando esté disponible.
-3. Conectar el directorio y las páginas a esos datos.
-4. Verificar con cuentas de prueba que un propietario no pueda editar datos de otra traba y que el público solo vea elementos publicados.
-5. Llevar la migración revisada al entorno activo.
+## Próximos pasos
+
+1. Conectar el directorio público a las columnas permitidas de `directory_pages`.
+2. Conectar **Catálogo TRAVERO** a las fichas publicadas y abrir el collage con foto y datos.
+3. Crear el flujo del dueño para preparar y publicar su página, fichas de ejemplares y productos/servicios.
+4. Añadir carga de fotos con permisos de Storage.
+5. Implementar publicaciones de redes cuando esté definida la autorización de importación.
