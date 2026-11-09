@@ -58,6 +58,15 @@ Una fila por ejemplar que el titular decide mostrar. Se relaciona con su página
 
 Productos y servicios manuales de la traba: nombre, tipo, descripción, foto, precio opcional y estado de publicación. No se mezclan con genealogía ni con ejemplares.
 
+### Anunciantes, campañas, solicitudes y pagos
+
+- directory_advertisers: cuenta comercial privada ligada al usuario que administra el negocio.
+- directory_ad_campaigns: tema, cobertura geográfica, ubicación del anuncio, formato, fechas, presupuesto y estados de revisión/pago. Los anunciantes solo pueden crear y editar borradores propios; aprobar o marcar pagado queda fuera de sus permisos.
+- directory_ad_sales_leads: solicitud privada para ventas con negocio, contacto, categorías, zonas de servicio y presupuesto tentativo.
+- directory_ad_orders: estado y referencia de la orden. No almacena datos de tarjeta; la integración del proveedor de pago todavía no existe.
+
+Las cuatro tablas están vacías. No hay anuncios activos ni solicitudes comerciales todavía.
+
 ### Publicaciones de redes
 
 Quedan para una fase posterior. Se cargarán o enlazarán con autorización del titular.
@@ -66,13 +75,15 @@ Quedan para una fase posterior. Se cargarán o enlazarán con autorización del 
 
 La tabla actual specimens conserva sus permisos privados por propietario, personal autorizado y administración. El directorio no permite consultas públicas directas a specimens: solo muestra los datos guardados en una ficha de catálogo publicada.
 
-Las tres tablas nuevas tienen RLS. Las páginas empiezan en borrador; las fichas de ejemplares y productos empiezan sin publicar. El público puede leer las páginas y los elementos publicados. El titular puede administrar los suyos; los campos internos de titular y ejemplar no tienen permiso de lectura para la API pública.
+Las tablas del directorio y de publicidad tienen RLS. Las páginas empiezan en borrador; las fichas de ejemplares y productos empiezan sin publicar. Los propietarios administran sus propias páginas y borradores de anuncios. Las solicitudes a ventas y las órdenes no son accesibles desde la API pública; solo el backend con permisos de servidor podrá gestionarlas. Los campos internos de titular y ejemplar tampoco tienen permiso de lectura para la API pública.
 
 El proyecto no permitía crear una rama de base de datos con su plan actual. Por eso las tablas se añadieron al proyecto activo, vacías y con RLS y permisos explícitos. Las migraciones remotas registradas son:
 - `20261109090223_create_directory_pages_and_public_catalog`
 - `20261109090328_index_directory_page_owner_foreign_keys`
 - `20261109090700_add_gallery_photos_to_directory_specimens`
 - `20261109091225_allow_owners_to_find_directory_page`
+- `20261109094435_create_directory_advertising_accounts_campaigns_and_leads`
+- `20261109094514_index_directory_advertising_tables_and_secure_sales_leads`
 
 El 9 de noviembre de 2026 se quitaron los permisos automáticos a `anon` y `authenticated` para tablas y secuencias nuevas en `public`. Esto no cambió las tablas existentes. Cada objeto nuevo requiere permisos explícitos junto con RLS.
 
@@ -85,7 +96,8 @@ Las columnas de foto están listas para recibir una URL; falta conectar la carga
 3. Crear el flujo del dueño para preparar y publicar su página, fichas de ejemplares y productos/servicios.
 4. Añadir carga de fotos con permisos de Storage.
 5. Elegir la fuente confiable de geolocalización del hosting/API y confirmar qué precisión entrega sin guardar IP.
-6. Crear el modelo/API de anunciantes, campañas, categorías, cobertura, pagos y solicitudes comerciales.
-7. Implementar el checkout directo y el flujo alternativo de ventas, incluida su revisión y aprobación.
-8. Añadir espacios **Publicidad** al directorio y módulos; medir impresiones/clics de forma agregada y sin IP.
-9. Implementar publicaciones de redes cuando esté definida la autorización de importación.
+6. Implementar la API/función de entrega usando la geolocalización confiable de Cloudflare y las campañas elegibles de Supabase.
+7. Crear la pantalla de anunciante y el envío privado de solicitudes a ventas.
+8. Seleccionar proveedor de cobro e integrar checkout cuando los precios, comisiones y condiciones estén aprobados.
+9. Añadir espacios **Publicidad** al directorio y módulos; medir impresiones/clics de forma agregada y sin IP.
+10. Implementar publicaciones de redes cuando esté definida la autorización de importación.
