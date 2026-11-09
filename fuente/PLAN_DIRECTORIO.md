@@ -39,11 +39,11 @@ El directorio incluirá una entrada **Anúnciate en TRAVERO** con dos opciones:
 
 Ventas podrá ayudar a crear o ajustar campañas, pero la selección automática seguirá limitada por la categoría actual y la cobertura que el anunciante declaró. El flujo debe distinguir claramente entre solicitud, cotización, pago recibido, revisión/aprobación, campaña activa y finalizada/cancelada.
 
-### Datos y límites de la API publicitaria
+### Estado actual de la API publicitaria
 
-Antes de mostrar anuncios reales se crearán los componentes de anunciantes, campañas, creatividades, categorías, zonas atendidas, órdenes/pagos y solicitudes a ventas. La API de entrega aplicará categoría y zona; la API comercial registrará el flujo de pago o la solicitud de contacto. Las métricas de impresiones y clics serán agregadas y no conservarán la IP. Precios, formatos disponibles, duración mínima, políticas de reembolso y comisiones de publicidad siguen pendientes de definición comercial.
+Ya se crearon en Supabase las tablas vacías para cuentas de anunciantes, campañas, solicitudes a ventas y órdenes. La estructura contempla categorías temáticas, zonas atendidas, formato, periodo, presupuesto, revisión y estado de pago. No guarda números de tarjeta ni direcciones IP. Las solicitudes de ventas y las órdenes solo podrán gestionarse desde el backend.
 
-Todavía no hay campañas, geolocalización conectada, checkout ni API publicitaria. Mientras se implementan no se mostrarán anuncios ficticios.
+Todavía faltan la función de entrega que use la geolocalización de Cloudflare, el formulario/API de solicitudes a ventas, el checkout y la pantalla del anunciante. No hay campañas ni solicitudes guardadas; el directorio no muestra anuncios hasta conectar esos componentes. Los precios, formatos, duración mínima, reembolsos y comisiones publicitarias siguen pendientes de definición comercial.
 ## Tablas implementadas
 
 ### directory_pages
@@ -95,9 +95,9 @@ Las columnas de foto están listas para recibir una URL; falta conectar la carga
 2. Conectar **Catálogo TRAVERO** a las fichas publicadas y abrir el collage con foto y datos.
 3. Crear el flujo del dueño para preparar y publicar su página, fichas de ejemplares y productos/servicios.
 4. Añadir carga de fotos con permisos de Storage.
-5. Elegir la fuente confiable de geolocalización del hosting/API y confirmar qué precisión entrega sin guardar IP.
-6. Implementar la API/función de entrega usando la geolocalización confiable de Cloudflare y las campañas elegibles de Supabase.
-7. Crear la pantalla de anunciante y el envío privado de solicitudes a ventas.
+5. Confirmar que el proyecto de Cloudflare despliegue Pages Functions desde la carpeta de la aplicación y configurar sus variables/secretos.
+6. Implementar la función de entrega con la geolocalización de Cloudflare y campañas elegibles de Supabase, sin almacenar IP.
+7. Crear la pantalla del anunciante y el envío privado de solicitudes a ventas.
 8. Seleccionar proveedor de cobro e integrar checkout cuando los precios, comisiones y condiciones estén aprobados.
 9. Añadir espacios **Publicidad** al directorio y módulos; medir impresiones/clics de forma agregada y sin IP.
 10. Implementar publicaciones de redes cuando esté definida la autorización de importación.
