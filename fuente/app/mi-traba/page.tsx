@@ -23,6 +23,17 @@ const columns = "id,owner_id,slug,name,profile_photo_url,cover_photo_url,descrip
 const errorText = (e: unknown) => e && typeof e === "object" && "message" in e ? String(e.message) : "No se pudo guardar la página.";
 const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+function normalizeHttpUrl(value: string) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error();
+    return url.toString();
+  } catch {
+    throw new Error("Las fotos y redes deben usar una dirección web http o https.");
+  }
+}
+
 export default function MiTrabaPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
@@ -69,12 +80,12 @@ export default function MiTrabaPage() {
     if (publicationStatus === "published" && !profilePhoto) { setError("Añade la foto de perfil de la traba antes de publicar."); setSaving(false); return; }
     const links: Record<string, string> = {};
     for (const [key, label] of [["facebook", "Facebook"], ["instagram", "Instagram"], ["youtube", "YouTube"]]) {
-      const value = String(form.get(key) || "").trim();
+      const value = normalizeHttpUrl(String(form.get(key) || "").trim());
       if (value) links[label] = value;
     }
     const payload = {
-      name, slug, profile_photo_url: profilePhoto || null,
-      cover_photo_url: String(form.get("cover_photo_url") || "").trim() || null,
+      name, slug, profile_photo_url: normalizeHttpUrl(profilePhoto),
+      cover_photo_url: normalizeHttpUrl(String(form.get("cover_photo_url") || "").trim()),
       description: String(form.get("description") || "").trim(),
       country: String(form.get("country") || "").trim() || null,
       city: String(form.get("city") || "").trim() || null,
