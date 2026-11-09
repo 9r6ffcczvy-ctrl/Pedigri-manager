@@ -44,7 +44,7 @@ Las tres tablas nuevas tienen RLS. Las páginas empiezan en borrador; las fichas
 
 El proyecto no permitía crear una rama de base de datos con su plan actual. Por eso las tablas se añadieron al proyecto activo, vacías y con RLS y permisos explícitos. Las migraciones remotas registradas son:
 - `20261109090223_create_directory_pages_and_public_catalog`
-- `20261109090223_index_directory_page_owner_foreign_keys`
+- `20261109090328_index_directory_page_owner_foreign_keys`
 
 El 9 de noviembre de 2026 se quitaron los permisos automáticos a `anon` y `authenticated` para tablas y secuencias nuevas en `public`. Esto no cambió las tablas existentes. Cada objeto nuevo requiere permisos explícitos junto con RLS.
 
