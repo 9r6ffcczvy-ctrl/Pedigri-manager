@@ -44,7 +44,7 @@ Todas las nuevas tablas tendrán Row Level Security. El público solo podrá con
 
 Las fotos públicas se guardarán con una política de almacenamiento que solo permita mostrar medios autorizados. Ninguna clave secreta ni service_role se usará en el navegador.
 
-Las tablas nuevas también necesitarán permisos explícitos para la Supabase Data API; desde el 30 de octubre de 2026, las tablas nuevas no quedan expuestas automáticamente. Se concederán solo las operaciones necesarias y siempre junto con RLS.
+Las tablas nuevas necesitarán permisos explícitos para la Supabase Data API. El 9 de noviembre de 2026 se revocaron los permisos automáticos de tablas y secuencias nuevas para anon y authenticated en public. Esto no cambia los permisos de las tablas existentes; service_role conserva sus permisos. Cada tabla nueva recibirá solo los GRANT necesarios, junto con RLS.
 
 ## Orden de implementación
 
